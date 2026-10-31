@@ -7,7 +7,7 @@
 // Usa: GET/POST /api/usuarios, PATCH /api/usuarios/:id,
 //      POST /api/usuarios/:id/reiniciar-password y GET /api/sucursales
 import { useEffect, useState } from "react";
-import { Check, CircleCheck, CircleX, Copy, KeyRound, Pencil, Plus, UserCheck, UserX } from "lucide-react";
+import { Bot, Check, CircleCheck, CircleX, Copy, KeyRound, Pencil, Plus, UserCheck, UserX } from "lucide-react";
 import { api } from "../api.js";
 
 const ROLES = ["Admin", "Gerente", "Ventas", "Bodega"];
@@ -250,6 +250,9 @@ export default function Admin() {
         </div>
       )}
 
+      {/* ===== Estado del asistente de IA ===== */}
+      <TarjetaAsistente />
+
       {/* ===== Ventanas ===== */}
       {ventana === "nuevo" && (
         <FormularioNuevo sucursales={sucursales} onCancelar={() => setVentana(null)} onCreado={usuarioCreado} />
@@ -259,6 +262,64 @@ export default function Admin() {
           onCancelar={() => setVentana(null)} onGuardado={usuarioEditado} />
       )}
     </div>
+  );
+}
+
+// ---------- Tarjeta "Asistente IA" ----------
+// Muestra si el asistente está encendido o apagado (GET /api/agente/estado)
+// y cómo cambiarlo desde Azure. Solo informa: el switch real es la variable AGENTE_HABILITADO.
+function TarjetaAsistente() {
+  // null = todavía consultando; true / false = respuesta del backend
+  const [habilitado, setHabilitado] = useState(null);
+  const [error, setError] = useState("");
+
+  // Consultar el estado una vez al entrar
+  useEffect(() => {
+    api("/api/agente/estado")
+      // datos = null si la sesión venció (api() ya manda al login): no cambiamos nada
+      .then((datos) => { if (datos) setHabilitado(Boolean(datos.habilitado)); })
+      .catch((err) => setError(err.message));
+  }, []);
+
+  return (
+    <section className="rounded-xl border border-borde bg-superficie p-4 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="flex items-center gap-2 font-semibold text-texto">
+          {/* Ícono del asistente en un cuadro de color acento */}
+          <Bot className="size-9 rounded-lg bg-acento/10 p-2 text-acento" strokeWidth={2} aria-hidden="true" />
+          Asistente IA
+        </h2>
+
+        {/* Badge de estado: verde si está encendido, rojo si está apagado */}
+        {error ? null : habilitado === null ? (
+          <span className={`${estiloBadge} bg-superficie-2 text-texto-suave`}>Consultando...</span>
+        ) : habilitado ? (
+          <span className={`${estiloBadge} bg-exito/10 text-exito`}>
+            <CircleCheck className="size-3.5" strokeWidth={2} aria-hidden="true" />
+            Encendido
+          </span>
+        ) : (
+          <span className={`${estiloBadge} bg-peligro/10 text-peligro`}>
+            <CircleX className="size-3.5" strokeWidth={2} aria-hidden="true" />
+            Apagado
+          </span>
+        )}
+      </div>
+
+      {error && (
+        <p role="alert" className="mt-3 rounded-lg border border-peligro/30 bg-peligro/10 px-3 py-2 text-sm text-peligro">
+          No se pudo consultar el estado: {error}
+        </p>
+      )}
+
+      {/* Instrucciones para apagarlo o encenderlo desde el portal de Azure */}
+      <p className="mt-3 text-sm text-texto-suave">
+        Para apagarlo: Portal de Azure → App Service del backend → Settings → Environment variables →{" "}
+        <code className="rounded bg-superficie-2 px-1 py-0.5 font-mono text-xs text-texto">AGENTE_HABILITADO = false</code>{" "}
+        → Apply. La app se reinicia en ~1 minuto. Para encenderlo, vuelve a poner{" "}
+        <code className="rounded bg-superficie-2 px-1 py-0.5 font-mono text-xs text-texto">true</code>.
+      </p>
+    </section>
   );
 }
 

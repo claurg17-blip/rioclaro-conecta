@@ -7,7 +7,7 @@
 // Usa: POST /api/agente/chat → { texto, fuentes, conversacionId }
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { ArrowLeft, Bot, FileText, Info, LoaderCircle, Plus, SendHorizontal, User } from "lucide-react";
+import { ArrowLeft, Bot, CircleX, FileText, Info, LoaderCircle, Plus, SendHorizontal, User } from "lucide-react";
 import { api } from "../api.js";
 
 const MAX_MENSAJE = 1000; // mismo tope que valida el backend
@@ -39,6 +39,20 @@ export default function Asistente() {
   const [texto, setTexto] = useState("");
   const [escribiendo, setEscribiendo] = useState(false); // esperando respuesta del asistente
 
+  // ¿El asistente está encendido? null = consultando (o no se pudo saber); true / false = respuesta
+  const [habilitado, setHabilitado] = useState(null);
+  // Solo bloqueamos cuando el backend dice claramente que está apagado.
+  // Si la consulta falla, dejamos usar el chat: el backend igual responde "apagado" si lo está.
+  const apagado = habilitado === false;
+
+  // Consultar el estado una vez al entrar (GET /api/agente/estado)
+  useEffect(() => {
+    api("/api/agente/estado")
+      // datos = null si la sesión venció (api() ya manda al login): no cambiamos nada
+      .then((datos) => { if (datos) setHabilitado(Boolean(datos.habilitado)); })
+      .catch(() => setHabilitado(null));
+  }, []);
+
   const siguienteId = useRef(1);        // ids para las "key" de React
   const finDeLista = useRef(null);      // para bajar al último mensaje
   const campoTexto = useRef(null);      // para regresar el foco al campo de texto
@@ -58,7 +72,7 @@ export default function Asistente() {
   // (la pregunta ya está en pantalla, no se repite).
   async function enviar(pregunta, esReintento = false) {
     const mensaje = pregunta.trim();
-    if (!mensaje || escribiendo) return;
+    if (!mensaje || escribiendo || apagado) return; // apagado: no se manda nada
 
     if (!esReintento) agregar({ tipo: "usuario", texto: mensaje });
     setTexto("");
@@ -145,6 +159,14 @@ export default function Asistente() {
         Estás hablando con un asistente de IA. Verifica antes de prometer al cliente.
       </p>
 
+      {/* ===== Aviso de asistente apagado (solo si el backend dice que está apagado) ===== */}
+      {apagado && (
+        <p role="alert" className="mx-3 mt-2 flex shrink-0 items-start gap-2 rounded-lg border border-peligro/30 bg-peligro/10 px-3 py-2 text-sm text-peligro md:mx-4">
+          <CircleX className="mt-0.5 size-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+          El asistente está apagado temporalmente. Usa los módulos de la app.
+        </p>
+      )}
+
       {/* ===== Mensajes (esta es la única parte con scroll) ===== */}
       <div role="log" aria-live="polite" className="flex-1 space-y-3 overflow-y-auto px-3 py-4 md:px-4">
         {/* Chat vacío: explicación y preguntas de ejemplo */}
@@ -160,7 +182,8 @@ export default function Asistente() {
                 <button
                   key={ejemplo}
                   onClick={() => enviar(ejemplo)}
-                  className="rounded-lg border border-borde bg-superficie-2 px-3 py-2 text-sm text-texto transition-colors hover:border-acento/50"
+                  disabled={apagado}
+                  className="rounded-lg border border-borde bg-superficie-2 px-3 py-2 text-sm text-texto transition-colors hover:border-acento/50 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {ejemplo}
                 </button>
@@ -212,9 +235,11 @@ export default function Asistente() {
             onChange={(e) => setTexto(e.target.value)}
             onKeyDown={alPresionarTecla}
             maxLength={MAX_MENSAJE}
+            disabled={apagado}
             placeholder="Escribe tu pregunta…"
             className="max-h-32 w-full resize-none rounded-2xl border border-borde bg-superficie-2 px-4 py-2 text-base text-texto
-                       outline-none placeholder:text-texto-suave focus:border-acento focus:ring-2 focus:ring-acento/30"
+                       outline-none placeholder:text-texto-suave focus:border-acento focus:ring-2 focus:ring-acento/30
+                       disabled:cursor-not-allowed disabled:opacity-60"
           />
           {/* Contador solo cuando ya se acerca al límite */}
           {texto.length > MAX_MENSAJE - 100 && (
@@ -224,7 +249,7 @@ export default function Asistente() {
         {/* Botón primario solo con ícono: aria-label le da nombre para lectores de pantalla */}
         <button
           type="submit"
-          disabled={escribiendo || !texto.trim()}
+          disabled={escribiendo || !texto.trim() || apagado}
           aria-label="Enviar"
           className="mb-0.5 inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-acento text-sobre-acento transition-colors hover:bg-acento-fuerte disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento"
         >
