@@ -2,3 +2,73 @@
 
 /* Carga Tailwind CSS 4: estilos base y todas las clases utilitarias */
 @import "tailwindcss";
+
+/* La variante "dark:" se activa cuando <html> tiene la clase "dark"
+   (la pone el script de index.html y el botón ThemeToggle) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ===== Colores del tema (tokens) =====
+   Cada color es una variable CSS. En :root están los valores del modo CLARO;
+   dentro de .dark se reemplazan por los del modo OSCURO.
+   Así los componentes usan siempre las mismas clases (bg-superficie, text-texto, ...)
+   y el color cambia solo al cambiar de modo, sin escribir "dark:" en cada lugar. */
+
+/* Modo claro */
+:root {
+  --fondo: #f8fafc; /* slate-50: fondo de la página */
+  --superficie: #ffffff; /* tarjetas, barra superior, menú */
+  --superficie-2: #f1f5f9; /* slate-100: inputs, hover, encabezados de tabla */
+  --borde: #e2e8f0; /* slate-200: bordes y divisores */
+  --texto: #0f172a; /* slate-900: texto principal */
+  /* slate-600 (no slate-500): con slate-500 el contraste sobre superficie-2 y peligro/10
+     quedaba por debajo de 4.5:1 (WCAG AA). */
+  --texto-suave: #475569; /* slate-600: etiquetas, texto secundario */
+  --acento: #0e7490; /* cyan-700: botón principal, enlaces, menú activo */
+  --acento-fuerte: #155e75; /* cyan-800: hover del acento */
+  --sobre-acento: #ffffff; /* texto encima del acento */
+  --exito: #047857; /* emerald-700 */
+  --alerta: #92400e; /* amber-800 (no amber-700): sobre alerta/10 amber-700 daba 4.39:1, menos de 4.5:1 */
+  --peligro: #be123c; /* rose-700 */
+  color-scheme: light; /* barras de scroll y controles nativos en claro */
+}
+
+/* Modo oscuro (el predeterminado) */
+.dark {
+  --fondo: #020617; /* slate-950 */
+  --superficie: #0f172a; /* slate-900 */
+  --superficie-2: #1e293b; /* slate-800 */
+  --borde: #1e293b; /* slate-800 */
+  --texto: #f1f5f9; /* slate-100 */
+  --texto-suave: #94a3b8; /* slate-400 */
+  --acento: #22d3ee; /* cyan-400 */
+  --acento-fuerte: #67e8f9; /* cyan-300 */
+  --sobre-acento: #020617; /* slate-950 */
+  --exito: #34d399; /* emerald-400 */
+  --alerta: #fbbf24; /* amber-400 */
+  --peligro: #fb7185; /* rose-400 */
+  color-scheme: dark; /* barras de scroll y controles nativos en oscuro */
+}
+
+/* Le "presenta" las variables a Tailwind: cada --color-xxx crea las clases
+   bg-xxx, text-xxx, border-xxx, ring-xxx, etc. (con opacidad: bg-acento/10).
+   "inline" hace que Tailwind use la variable directamente, para que cambie con el modo. */
+@theme inline {
+  --color-fondo: var(--fondo);
+  --color-superficie: var(--superficie);
+  --color-superficie-2: var(--superficie-2);
+  --color-borde: var(--borde);
+  --color-texto: var(--texto);
+  --color-texto-suave: var(--texto-suave);
+  --color-acento: var(--acento);
+  --color-acento-fuerte: var(--acento-fuerte);
+  --color-sobre-acento: var(--sobre-acento);
+  --color-exito: var(--exito);
+  --color-alerta: var(--alerta);
+  --color-peligro: var(--peligro);
+}
+
+/* Fondo y color de texto de toda la página */
+body {
+  background-color: var(--fondo);
+  color: var(--texto);
+}

@@ -2,7 +2,9 @@
 // Diseño mobile-first: en celular ocupa todo el ancho; en pantallas grandes se centra una tarjeta.
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router";
+import { Droplets, Lock, LogIn, User } from "lucide-react";
 import { useAuth } from "../auth/AuthContext.jsx";
+import ThemeToggle from "../componentes/ThemeToggle.jsx";
 
 export default function Login() {
   const { usuario, login } = useAuth();
@@ -33,14 +35,27 @@ export default function Login() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-slate-100 px-4">
-      <div className="w-full max-w-sm bg-white rounded-xl shadow p-6 sm:p-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-center text-blue-700">Río Claro Conecta</h1>
-        <p className="mt-1 text-center text-slate-500">Inicia sesión para continuar</p>
+    // relative: permite colocar el botón de tema (arriba a la derecha) y el pie (abajo) con absolute.
+    // py-14: deja espacio arriba y abajo para que la tarjeta no los tape en pantallas bajas.
+    <main className="relative min-h-screen flex items-center justify-center bg-fondo px-4 py-14">
+      {/* Botón de tema (oscuro / claro) en la esquina superior derecha */}
+      <ThemeToggle className="absolute right-4 top-4" />
+
+      {/* Tarjeta: fondo superficie, borde sutil y esquinas redondeadas */}
+      <div className="w-full max-w-sm rounded-xl border border-borde bg-superficie p-6 shadow-sm sm:p-8">
+        <h1 className="flex flex-col items-center gap-3 text-center text-2xl font-bold text-texto sm:text-3xl">
+          {/* Logo: gota de agua en un cuadro con el color de acento */}
+          <Droplets className="size-12 rounded-xl bg-acento/10 p-2.5 text-acento" strokeWidth={2} aria-hidden="true" />
+          Río Claro Distribuidora
+        </h1>
+        <p className="mt-1 text-center text-texto-suave">Inicia sesión para continuar</p>
 
         <form onSubmit={entrar} className="mt-6 space-y-4">
           <div>
-            <label htmlFor="usuario" className="block text-sm font-medium text-slate-700">Usuario</label>
+            <label htmlFor="usuario" className="flex items-center gap-1.5 text-sm font-medium text-texto-suave">
+              <User className="size-4" strokeWidth={2} aria-hidden="true" />
+              Usuario
+            </label>
             <input
               id="usuario"
               type="text"
@@ -49,12 +64,15 @@ export default function Login() {
               required
               value={nombreUsuario}
               onChange={(e) => setNombreUsuario(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-base focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="mt-1 w-full rounded-lg border border-borde bg-superficie-2 px-3 py-2 text-base text-texto outline-none placeholder:text-texto-suave focus:border-acento focus:ring-2 focus:ring-acento/30"
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-slate-700">Contraseña</label>
+            <label htmlFor="password" className="flex items-center gap-1.5 text-sm font-medium text-texto-suave">
+              <Lock className="size-4" strokeWidth={2} aria-hidden="true" />
+              Contraseña
+            </label>
             <input
               id="password"
               type="password"
@@ -62,26 +80,33 @@ export default function Login() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-base focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="mt-1 w-full rounded-lg border border-borde bg-superficie-2 px-3 py-2 text-base text-texto outline-none placeholder:text-texto-suave focus:border-acento focus:ring-2 focus:ring-acento/30"
             />
           </div>
 
           {/* Mensaje de error (solo aparece si hay uno) */}
           {error && (
-            <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+            <p role="alert" className="rounded-lg border border-peligro/30 bg-peligro/10 px-3 py-2 text-sm text-peligro">
               {error}
             </p>
           )}
 
+          {/* Botón primario: color de acento; justify-center centra ícono y texto */}
           <button
             type="submit"
             disabled={enviando}
-            className="w-full rounded-lg bg-blue-700 py-2.5 font-semibold text-white hover:bg-blue-800 disabled:opacity-60"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-acento px-4 py-2.5 font-medium text-sobre-acento transition-colors hover:bg-acento-fuerte disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento"
           >
+            <LogIn className="size-4" strokeWidth={2} aria-hidden="true" />
             {enviando ? "Entrando..." : "Entrar"}
           </button>
         </form>
       </div>
+
+      {/* Pie de página: créditos, abajo y centrado, en texto pequeño y suave */}
+      <footer className="absolute inset-x-0 bottom-4 px-4 text-center text-xs text-texto-suave">
+        © 2026 Río Claro · Desarrollado por Claudia Rosales Gutiérrez
+      </footer>
     </main>
   );
 }

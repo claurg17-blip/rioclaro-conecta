@@ -82,8 +82,8 @@ export function RutaProtegida({ roles, children }) {
   if (roles && !roles.includes(usuario.rol)) {
     return (
       <div className="p-6 text-center">
-        <h1 className="text-xl font-semibold text-slate-800">Sin permiso</h1>
-        <p className="mt-2 text-slate-600">Tu rol ({usuario.rol}) no tiene acceso a esta sección.</p>
+        <h1 className="text-xl font-semibold text-texto">Sin permiso</h1>
+        <p className="mt-2 text-texto-suave">Tu rol ({usuario.rol}) no tiene acceso a esta sección.</p>
       </div>
     );
   }

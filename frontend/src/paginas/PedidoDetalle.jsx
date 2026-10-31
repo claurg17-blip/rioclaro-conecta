@@ -3,6 +3,7 @@
 // Usa: GET /api/pedidos/:folio y PATCH /api/pedidos/:folio/estado
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
+import { ArrowLeft, CircleCheck, CircleX, PackageCheck, Truck } from "lucide-react";
 import { api } from "../api.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { EstadoPedido, FechaCompromiso } from "./Pedidos.jsx";
@@ -14,6 +15,16 @@ const ESTADOS_BODEGA = ["Surtido", "Enviado"]; // Bodega solo puede marcar estos
 const formatoPesos = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" });
 const pesos = (n) => (n == null ? "—" : formatoPesos.format(n));
 const formatoFechaHora = new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeStyle: "short" });
+
+// Ícono del botón "Marcar como ..." según el estado al que se avanza (mismos íconos que los badges)
+const ICONO_SIGUIENTE = { Surtido: PackageCheck, Enviado: Truck, Entregado: CircleCheck };
+
+// Clases de botones e input (recetas con los tokens del tema)
+const estiloBotonPrimario =
+  "inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-acento px-4 py-2.5 font-medium text-sobre-acento transition-colors hover:bg-acento-fuerte disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento";
+const estiloBotonPeligro =
+  "inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-peligro/30 bg-peligro/10 px-4 py-2.5 font-medium text-peligro transition-colors hover:bg-peligro/20 disabled:opacity-50";
+const estiloTarjeta = "rounded-xl border border-borde bg-superficie p-4 shadow-sm";
 
 export default function PedidoDetalle() {
   const { folio } = useParams(); // el folio viene en la dirección
@@ -69,16 +80,23 @@ export default function PedidoDetalle() {
     }
   }
 
+  // Ícono del botón de avanzar (si hay un siguiente estado)
+  const IconoSiguiente = siguiente ? ICONO_SIGUIENTE[siguiente] : null;
+
+  // Enlace para regresar: la flecha ahora es el ícono ArrowLeft
   const enlaceRegresar = (
-    <Link to="/pedidos" className="text-sm text-blue-700 hover:underline">← Pedidos</Link>
+    <Link to="/pedidos" className="inline-flex items-center gap-1 text-sm text-acento hover:underline">
+      <ArrowLeft className="size-4" strokeWidth={2} aria-hidden="true" />
+      Pedidos
+    </Link>
   );
 
-  if (cargando) return <div className="space-y-4">{enlaceRegresar}<p className="text-slate-500">Cargando...</p></div>;
+  if (cargando) return <div className="space-y-4">{enlaceRegresar}<p className="text-texto-suave">Cargando...</p></div>;
   if (error) {
     return (
       <div className="space-y-4">
         {enlaceRegresar}
-        <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+        <p role="alert" className="rounded-lg border border-peligro/30 bg-peligro/10 px-3 py-2 text-sm text-peligro">{error}</p>
       </div>
     );
   }
@@ -89,54 +107,54 @@ export default function PedidoDetalle() {
 
       {/* ===== Encabezado ===== */}
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-bold text-slate-800">{pedido.folio}</h1>
+        <h1 className="text-2xl font-bold text-texto">{pedido.folio}</h1>
         <EstadoPedido estado={pedido.estado} />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         {/* ===== Datos del pedido y del cliente ===== */}
-        <section className="rounded-xl bg-white p-4 shadow">
-          <h2 className="font-semibold text-slate-800">Datos</h2>
+        <section className={estiloTarjeta}>
+          <h2 className="font-semibold text-texto">Datos</h2>
           <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-            <dt className="text-slate-500">Cliente</dt>
-            <dd className="text-slate-800">{pedido.cliente ?? "—"}{pedido.tipo_cliente && ` (${pedido.tipo_cliente})`}</dd>
-            <dt className="text-slate-500">Teléfono</dt>
-            <dd>
+            <dt className="text-texto-suave">Cliente</dt>
+            <dd className="text-texto">{pedido.cliente ?? "—"}{pedido.tipo_cliente && ` (${pedido.tipo_cliente})`}</dd>
+            <dt className="text-texto-suave">Teléfono</dt>
+            <dd className="text-texto">
               {pedido.telefono
-                ? <a href={`tel:${pedido.telefono}`} className="text-blue-700 hover:underline">{pedido.telefono}</a>
+                ? <a href={`tel:${pedido.telefono}`} className="text-acento hover:underline">{pedido.telefono}</a>
                 : "—"}
             </dd>
-            <dt className="text-slate-500">Correo</dt>
-            <dd className="truncate">
+            <dt className="text-texto-suave">Correo</dt>
+            <dd className="truncate text-texto">
               {pedido.email
-                ? <a href={`mailto:${pedido.email}`} className="text-blue-700 hover:underline">{pedido.email}</a>
+                ? <a href={`mailto:${pedido.email}`} className="text-acento hover:underline">{pedido.email}</a>
                 : "—"}
             </dd>
-            <dt className="text-slate-500">Sucursal</dt>
-            <dd className="text-slate-800">{pedido.sucursal ?? "—"}</dd>
-            <dt className="text-slate-500">Compromiso</dt>
-            <dd className="text-slate-800"><FechaCompromiso fecha={pedido.fecha_compromiso} /></dd>
-            <dt className="text-slate-500">Creado</dt>
-            <dd className="text-slate-800">{formatoFechaHora.format(new Date(pedido.creado_en))}</dd>
+            <dt className="text-texto-suave">Sucursal</dt>
+            <dd className="text-texto">{pedido.sucursal ?? "—"}</dd>
+            <dt className="text-texto-suave">Compromiso</dt>
+            <dd className="text-texto"><FechaCompromiso fecha={pedido.fecha_compromiso} /></dd>
+            <dt className="text-texto-suave">Creado</dt>
+            <dd className="text-texto">{formatoFechaHora.format(new Date(pedido.creado_en))}</dd>
           </dl>
         </section>
 
         {/* ===== Cambiar estado ===== */}
         {(puedeAvanzar || puedeCancelar) && (
-          <section className="rounded-xl bg-white p-4 shadow">
-            <h2 className="font-semibold text-slate-800">Cambiar estado</h2>
+          <section className={estiloTarjeta}>
+            <h2 className="font-semibold text-texto">Cambiar estado</h2>
 
             {!cambio ? (
               <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                 {puedeAvanzar && (
-                  <button onClick={() => abrirCambio(siguiente)}
-                    className="flex-1 rounded-lg bg-blue-700 py-2.5 font-semibold text-white hover:bg-blue-800">
+                  <button onClick={() => abrirCambio(siguiente)} className={estiloBotonPrimario}>
+                    {IconoSiguiente && <IconoSiguiente className="size-4" strokeWidth={2} aria-hidden="true" />}
                     Marcar como {siguiente}
                   </button>
                 )}
                 {puedeCancelar && (
-                  <button onClick={() => abrirCambio("Cancelado")}
-                    className="flex-1 rounded-lg border border-red-300 py-2.5 font-medium text-red-700 hover:bg-red-50">
+                  <button onClick={() => abrirCambio("Cancelado")} className={estiloBotonPeligro}>
+                    <CircleX className="size-4" strokeWidth={2} aria-hidden="true" />
                     Cancelar pedido
                   </button>
                 )}
@@ -144,27 +162,27 @@ export default function PedidoDetalle() {
             ) : (
               // Confirmación con nota opcional (queda en la línea de tiempo)
               <form onSubmit={confirmarCambio} className="mt-3 space-y-3">
-                <p className="text-sm text-slate-700">
-                  ¿Cambiar <strong>{pedido.folio}</strong> de {pedido.estado} a <strong>{cambio}</strong>?
+                <p className="text-sm text-texto-suave">
+                  ¿Cambiar <strong className="text-texto">{pedido.folio}</strong> de {pedido.estado} a <strong className="text-texto">{cambio}</strong>?
                 </p>
                 <div>
-                  <label htmlFor="nota" className="block text-sm font-medium text-slate-700">Nota (opcional)</label>
+                  <label htmlFor="nota" className="block text-sm font-medium text-texto-suave">Nota (opcional)</label>
                   <textarea id="nota" rows={2} value={nota} onChange={(e) => setNota(e.target.value)}
                     placeholder={cambio === "Cancelado" ? "Motivo de la cancelación" : "Ej. salió en la camioneta 2"}
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-base focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200" />
+                    className="mt-1 w-full rounded-lg border border-borde bg-superficie-2 px-3 py-2 text-base text-texto outline-none placeholder:text-texto-suave focus:border-acento focus:ring-2 focus:ring-acento/30" />
                 </div>
                 {errorCambio && (
-                  <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{errorCambio}</p>
+                  <p role="alert" className="rounded-lg border border-peligro/30 bg-peligro/10 px-3 py-2 text-sm text-peligro">{errorCambio}</p>
                 )}
                 <div className="flex gap-2">
+                  {/* Botón secundario */}
                   <button type="button" onClick={() => setCambio(null)}
-                    className="flex-1 rounded-lg border border-slate-300 py-2.5 text-slate-700 hover:bg-slate-50">
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-borde bg-superficie-2 px-4 py-2.5 text-texto transition-colors hover:border-acento/50">
                     Volver
                   </button>
+                  {/* Confirmar: rojo si es cancelación, acento si es avance */}
                   <button type="submit" disabled={enviando}
-                    className={`flex-1 rounded-lg py-2.5 font-semibold text-white disabled:opacity-60 ${
-                      cambio === "Cancelado" ? "bg-red-600 hover:bg-red-700" : "bg-blue-700 hover:bg-blue-800"
-                    }`}>
+                    className={cambio === "Cancelado" ? estiloBotonPeligro : estiloBotonPrimario}>
                     {enviando ? "Guardando..." : "Confirmar"}
                   </button>
                 </div>
@@ -175,42 +193,42 @@ export default function PedidoDetalle() {
       </div>
 
       {/* ===== Productos ===== */}
-      <section className="rounded-xl bg-white p-4 shadow">
-        <h2 className="font-semibold text-slate-800">Productos</h2>
-        <ul className="mt-2 divide-y divide-slate-100">
+      <section className={estiloTarjeta}>
+        <h2 className="font-semibold text-texto">Productos</h2>
+        <ul className="mt-2 divide-y divide-borde">
           {pedido.productos.map((p) => (
             <li key={p.producto_id} className="flex items-start justify-between gap-3 py-2 text-sm">
               <div className="min-w-0">
-                <p className="text-slate-800">{p.nombre}</p>
-                <p className="text-slate-500">{p.sku} · {p.cantidad} {p.unidad} × {pesos(p.precio)}</p>
+                <p className="text-texto">{p.nombre}</p>
+                <p className="text-texto-suave">{p.sku} · {p.cantidad} {p.unidad} × {pesos(p.precio)}</p>
               </div>
-              <p className="shrink-0 font-medium text-slate-800">{pesos(p.subtotal)}</p>
+              <p className="shrink-0 font-medium text-texto">{pesos(p.subtotal)}</p>
             </li>
           ))}
         </ul>
-        <p className="mt-2 flex justify-between border-t border-slate-200 pt-2 font-semibold text-slate-800">
+        <p className="mt-2 flex justify-between border-t border-borde pt-2 font-semibold text-texto">
           <span>Total</span>
           <span>{pesos(pedido.total)}</span>
         </p>
       </section>
 
       {/* ===== Línea de tiempo ===== */}
-      <section className="rounded-xl bg-white p-4 shadow">
-        <h2 className="font-semibold text-slate-800">Línea de tiempo</h2>
+      <section className={estiloTarjeta}>
+        <h2 className="font-semibold text-texto">Línea de tiempo</h2>
         {pedido.eventos.length === 0 ? (
-          <p className="mt-2 text-sm text-slate-500">Sin eventos registrados.</p>
+          <p className="mt-2 text-sm text-texto-suave">Sin eventos registrados.</p>
         ) : (
-          <ol className="mt-3 space-y-4 border-l-2 border-slate-200 pl-4">
+          <ol className="mt-3 space-y-4 border-l-2 border-borde pl-4">
             {pedido.eventos.map((ev) => (
               <li key={ev.id} className="relative">
-                {/* Punto sobre la línea */}
-                <span className="absolute -left-[1.4rem] top-1 h-3 w-3 rounded-full border-2 border-white bg-blue-600" aria-hidden="true" />
+                {/* Punto sobre la línea: color de acento con un borde del color de la tarjeta (parece "recortado") */}
+                <span className="absolute -left-[1.4rem] top-1 h-3 w-3 rounded-full border-2 border-superficie bg-acento" aria-hidden="true" />
                 <div className="flex flex-wrap items-center gap-2">
                   <EstadoPedido estado={ev.estado} />
-                  <span className="text-xs text-slate-500">{formatoFechaHora.format(new Date(ev.creado_en))}</span>
+                  <span className="text-xs text-texto-suave">{formatoFechaHora.format(new Date(ev.creado_en))}</span>
                 </div>
-                {ev.nota && <p className="mt-1 text-sm text-slate-700">{ev.nota}</p>}
-                <p className="text-xs text-slate-500">{ev.usuario ?? "Usuario desconocido"}</p>
+                {ev.nota && <p className="mt-1 text-sm text-texto">{ev.nota}</p>}
+                <p className="text-xs text-texto-suave">{ev.usuario ?? "Usuario desconocido"}</p>
               </li>
             ))}
           </ol>

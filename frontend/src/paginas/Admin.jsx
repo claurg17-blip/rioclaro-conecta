@@ -7,15 +7,31 @@
 // Usa: GET/POST /api/usuarios, PATCH /api/usuarios/:id,
 //      POST /api/usuarios/:id/reiniciar-password y GET /api/sucursales
 import { useEffect, useState } from "react";
+import { Check, CircleCheck, CircleX, Copy, KeyRound, Pencil, Plus, UserCheck, UserX } from "lucide-react";
 import { api } from "../api.js";
 
 const ROLES = ["Admin", "Gerente", "Ventas", "Bodega"];
 const formatoFechaHora = new Intl.DateTimeFormat("es-MX", { dateStyle: "short", timeStyle: "short" });
 
+// Receta de Input / select con los tokens del tema
 const estiloInput =
-  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200";
+  "w-full rounded-lg border border-borde bg-superficie-2 px-3 py-2 text-base text-texto outline-none placeholder:text-texto-suave focus:border-acento focus:ring-2 focus:ring-acento/30";
+// Base de los botones chicos de cada usuario. El color (borde, fondo, texto, hover) lo pone cada botón.
 const estiloBotonChico =
-  "rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-50 disabled:opacity-60";
+  "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition-colors disabled:opacity-50";
+// Colores de los botones chicos
+const botonNeutro = "border-borde bg-superficie-2 text-texto hover:border-acento/50";
+const botonPeligro = "border-peligro/30 bg-peligro/10 text-peligro hover:bg-peligro/20";
+const botonExito = "border-exito/30 bg-exito/10 text-exito hover:bg-exito/20";
+
+// Badge de rol: Admin resaltado con el acento; los demás en gris
+const COLORES_ROL = {
+  Admin: "bg-acento/10 text-acento",
+  Gerente: "bg-superficie-2 text-texto",
+  Ventas: "bg-superficie-2 text-texto",
+  Bodega: "bg-superficie-2 text-texto",
+};
+const estiloBadge = "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium";
 
 export default function Admin() {
   // id del Admin con sesión (el login no lo trae; lo pedimos a /api/me)
@@ -113,34 +129,42 @@ export default function Admin() {
     return (
       <div className="flex flex-wrap gap-2">
         <button onClick={() => { limpiarMensajes(); setVentana(u); }} disabled={ocupado === u.id}
-          className={`${estiloBotonChico} border-slate-300 text-slate-700`}>
+          className={`${estiloBotonChico} ${botonNeutro}`}>
+          <Pencil className="size-4" strokeWidth={2} aria-hidden="true" />
           Editar
         </button>
         {!esYo && (
+          // Desactivar en rojo (UserX); Activar en verde (UserCheck)
           <button onClick={() => cambiarActivo(u)} disabled={ocupado === u.id}
-            className={`${estiloBotonChico} ${u.activo ? "border-red-300 text-red-700" : "border-green-300 text-green-700"}`}>
+            className={`${estiloBotonChico} ${u.activo ? botonPeligro : botonExito}`}>
+            {u.activo
+              ? <UserX className="size-4" strokeWidth={2} aria-hidden="true" />
+              : <UserCheck className="size-4" strokeWidth={2} aria-hidden="true" />}
             {u.activo ? "Desactivar" : "Activar"}
           </button>
         )}
         <button onClick={() => reiniciarPassword(u)} disabled={ocupado === u.id}
-          className={`${estiloBotonChico} border-slate-300 text-slate-700`}>
+          className={`${estiloBotonChico} ${botonNeutro}`}>
+          <KeyRound className="size-4" strokeWidth={2} aria-hidden="true" />
           Reiniciar contraseña
         </button>
       </div>
     );
   }
 
-  // Etiquetas de estado de un usuario
+  // Etiquetas de estado de un usuario (badges)
   function Estado({ u }) {
     return (
       <div className="flex flex-wrap gap-1">
-        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-          u.activo ? "bg-green-50 text-green-700" : "bg-slate-100 text-slate-500"
-        }`}>
+        <span className={`${estiloBadge} ${u.activo ? "bg-exito/10 text-exito" : "bg-superficie-2 text-texto-suave"}`}>
+          {u.activo
+            ? <CircleCheck className="size-3.5" strokeWidth={2} aria-hidden="true" />
+            : <CircleX className="size-3.5" strokeWidth={2} aria-hidden="true" />}
           {u.activo ? "Activo" : "Inactivo"}
         </span>
         {u.debe_cambiar_password && (
-          <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">
+          <span className={`${estiloBadge} bg-alerta/10 text-alerta`}>
+            <KeyRound className="size-3.5" strokeWidth={2} aria-hidden="true" />
             Contraseña temporal
           </span>
         )}
@@ -154,10 +178,12 @@ export default function Admin() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-slate-800">Usuarios</h1>
+        <h1 className="text-2xl font-bold text-texto">Usuarios</h1>
+        {/* Botón primario; el "+" del texto ahora es el ícono Plus */}
         <button onClick={() => { limpiarMensajes(); setVentana("nuevo"); }}
-          className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800">
-          + Nuevo usuario
+          className="inline-flex items-center gap-2 rounded-lg bg-acento px-4 py-2 text-sm font-medium text-sobre-acento transition-colors hover:bg-acento-fuerte focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento">
+          <Plus className="size-4" strokeWidth={2} aria-hidden="true" />
+          Nuevo usuario
         </button>
       </div>
 
@@ -165,19 +191,19 @@ export default function Admin() {
       {temporal && <RecuadroTemporal temporal={temporal} onCerrar={() => setTemporal(null)} />}
 
       {/* ===== Mensajes ===== */}
-      {aviso && <p role="status" className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">{aviso}</p>}
-      {error && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-      {!resultado.cargado && <p className="text-slate-500">Cargando...</p>}
+      {aviso && <p role="status" className="rounded-lg border border-exito/30 bg-exito/10 px-3 py-2 text-sm text-exito">{aviso}</p>}
+      {error && <p role="alert" className="rounded-lg border border-peligro/30 bg-peligro/10 px-3 py-2 text-sm text-peligro">{error}</p>}
+      {!resultado.cargado && <p className="text-texto-suave">Cargando...</p>}
 
       {/* ===== Celular: tarjetas ===== */}
       <ul className="space-y-2 md:hidden">
         {resultado.usuarios.map((u) => (
-          <li key={u.id} className={`rounded-xl bg-white p-4 shadow ${u.activo ? "" : "opacity-70"}`}>
+          <li key={u.id} className={`rounded-xl border border-borde bg-superficie p-4 shadow-sm ${u.activo ? "" : "opacity-70"}`}>
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="font-semibold text-slate-800">{u.nombre}{u.id === miId && " (tú)"}</p>
-                <p className="text-sm text-slate-500">{u.usuario} · {u.rol} · {u.sucursal ?? "Sin sucursal"}</p>
-                <p className="text-xs text-slate-500">Último acceso: {ultimoAcceso(u)}</p>
+                <p className="font-semibold text-texto">{u.nombre}{u.id === miId && " (tú)"}</p>
+                <p className="text-sm text-texto-suave">{u.usuario} · {u.rol} · {u.sucursal ?? "Sin sucursal"}</p>
+                <p className="text-xs text-texto-suave">Último acceso: {ultimoAcceso(u)}</p>
               </div>
               <Estado u={u} />
             </div>
@@ -188,9 +214,9 @@ export default function Admin() {
 
       {/* ===== Escritorio: tabla ===== */}
       {resultado.usuarios.length > 0 && (
-        <div className="hidden overflow-x-auto rounded-xl bg-white shadow md:block">
+        <div className="hidden overflow-x-auto rounded-xl border border-borde bg-superficie shadow-sm md:block">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-600">
+            <thead className="bg-superficie-2 text-xs uppercase tracking-wide text-texto-suave">
               <tr>
                 <th className="px-4 py-3 font-medium">Nombre</th>
                 <th className="px-4 py-3 font-medium">Usuario</th>
@@ -201,12 +227,18 @@ export default function Admin() {
                 <th className="px-4 py-3"><span className="sr-only">Acciones</span></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-borde">
               {resultado.usuarios.map((u) => (
-                <tr key={u.id} className={u.activo ? "" : "bg-slate-50 text-slate-500"}>
-                  <td className="px-4 py-3 font-medium text-slate-800">{u.nombre}{u.id === miId && " (tú)"}</td>
-                  <td className="px-4 py-3 font-mono">{u.usuario}</td>
-                  <td className="px-4 py-3">{u.rol}</td>
+                // Usuario inactivo: fila con fondo gris y texto suave
+                <tr key={u.id} className={`transition-colors ${
+                  u.activo ? "text-texto hover:bg-superficie-2/60" : "bg-superficie-2/40 text-texto-suave"
+                }`}>
+                  <td className={`px-4 py-3 font-medium ${u.activo ? "text-texto" : ""}`}>{u.nombre}{u.id === miId && " (tú)"}</td>
+                  <td className="px-4 py-3 font-mono text-texto-suave">{u.usuario}</td>
+                  {/* Rol como badge */}
+                  <td className="px-4 py-3">
+                    <span className={`${estiloBadge} ${COLORES_ROL[u.rol] ?? "bg-superficie-2 text-texto"}`}>{u.rol}</span>
+                  </td>
                   <td className="px-4 py-3">{u.sucursal ?? "—"}</td>
                   <td className="px-4 py-3"><Estado u={u} /></td>
                   <td className="whitespace-nowrap px-4 py-3">{ultimoAcceso(u)}</td>
@@ -246,9 +278,13 @@ function RecuadroTemporal({ temporal, onCerrar }) {
   }
 
   return (
-    <section role="alert" className="rounded-xl border-2 border-amber-400 bg-amber-50 p-4">
-      <h2 className="font-semibold text-amber-900">Contraseña temporal de {temporal.nombre}</h2>
-      <p className="mt-1 text-sm text-amber-900">
+    // Recuadro verde tenue (exito/10) con borde verde
+    <section role="alert" className="rounded-xl border border-exito/30 bg-exito/10 p-4">
+      <h2 className="flex items-center gap-2 font-semibold text-exito">
+        <KeyRound className="size-5 shrink-0" strokeWidth={2} aria-hidden="true" />
+        Contraseña temporal de {temporal.nombre}
+      </h2>
+      <p className="mt-1 text-sm text-texto">
         Usuario: <strong className="font-mono">{temporal.usuario}</strong>. Cópiala y entrégala en persona o por un
         medio privado. <strong>No se volverá a mostrar.</strong> Deberá cambiarla al iniciar sesión.
       </p>
@@ -256,13 +292,17 @@ function RecuadroTemporal({ temporal, onCerrar }) {
         {/* readOnly + onFocus select: un toque la selecciona completa */}
         <input readOnly value={temporal.password} aria-label="Contraseña temporal"
           onFocus={(e) => e.target.select()}
-          className="w-full rounded-lg border border-amber-300 bg-white px-3 py-2 font-mono text-lg tracking-wider" />
+          className="w-full rounded-lg border border-exito/30 bg-superficie px-3 py-2 font-mono text-lg tracking-wider text-texto outline-none focus:ring-2 focus:ring-exito/30" />
+        {/* Botón verde: ícono Copy, y Check cuando ya se copió */}
         <button onClick={copiar}
-          className="shrink-0 rounded-lg bg-amber-600 px-4 py-2 font-semibold text-white hover:bg-amber-700">
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-exito px-4 py-2 font-medium text-sobre-acento transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-exito">
+          {copiada
+            ? <Check className="size-4" strokeWidth={2} aria-hidden="true" />
+            : <Copy className="size-4" strokeWidth={2} aria-hidden="true" />}
           {copiada ? "¡Copiada!" : "Copiar"}
         </button>
       </div>
-      <button onClick={onCerrar} className="mt-3 text-sm font-medium text-amber-900 underline">
+      <button onClick={onCerrar} className="mt-3 text-sm font-medium text-exito underline hover:no-underline">
         Ya la copié, cerrar
       </button>
     </section>
@@ -272,11 +312,13 @@ function RecuadroTemporal({ temporal, onCerrar }) {
 // ---------- Ventana (base para los formularios) ----------
 function Ventana({ titulo, children, onSubmit }) {
   return (
-    <div className="fixed inset-0 z-30 flex items-end justify-center bg-black/40 sm:items-center sm:p-4"
+    // Fondo oscuro semitransparente detrás de la ventana
+    <div className="fixed inset-0 z-30 flex items-end justify-center bg-black/60 sm:items-center sm:p-4"
       role="dialog" aria-modal="true" aria-label={titulo}>
+      {/* La ventana: panel sólido con borde sutil */}
       <form onSubmit={onSubmit}
-        className="max-h-[90vh] w-full max-w-md space-y-4 overflow-y-auto rounded-t-2xl bg-white p-6 sm:rounded-2xl">
-        <h2 className="text-lg font-bold text-slate-800">{titulo}</h2>
+        className="max-h-[90vh] w-full max-w-md space-y-4 overflow-y-auto rounded-t-2xl border border-borde bg-superficie p-6 text-texto shadow-sm sm:rounded-2xl">
+        <h2 className="text-lg font-bold text-texto">{titulo}</h2>
         {children}
       </form>
     </div>
@@ -288,14 +330,15 @@ function CamposRolSucursal({ rol, setRol, sucursalId, setSucursalId, sucursales,
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <div>
-        <label htmlFor="rol" className="block text-sm font-medium text-slate-700">Rol</label>
+        <label htmlFor="rol" className="block text-sm font-medium text-texto-suave">Rol</label>
+        {/* Bloqueado: más transparente y con cursor de "no permitido" */}
         <select id="rol" value={rol} disabled={rolBloqueado} onChange={(e) => setRol(e.target.value)}
-          className={`mt-1 ${estiloInput} disabled:bg-slate-100`}>
+          className={`mt-1 ${estiloInput} disabled:cursor-not-allowed disabled:opacity-60`}>
           {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
         </select>
       </div>
       <div>
-        <label htmlFor="sucursal" className="block text-sm font-medium text-slate-700">Sucursal</label>
+        <label htmlFor="sucursal" className="block text-sm font-medium text-texto-suave">Sucursal</label>
         <select id="sucursal" value={sucursalId} onChange={(e) => setSucursalId(e.target.value)} className={`mt-1 ${estiloInput}`}>
           <option value="">Sin sucursal</option>
           {sucursales.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
@@ -308,12 +351,14 @@ function CamposRolSucursal({ rol, setRol, sucursalId, setSucursalId, sucursales,
 function BotonesFormulario({ onCancelar, enviando, texto }) {
   return (
     <div className="flex gap-2">
+      {/* Botón secundario */}
       <button type="button" onClick={onCancelar}
-        className="flex-1 rounded-lg border border-slate-300 py-2.5 text-slate-700 hover:bg-slate-50">
+        className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-borde bg-superficie-2 px-4 py-2.5 text-texto transition-colors hover:border-acento/50">
         Cancelar
       </button>
+      {/* Botón primario */}
       <button type="submit" disabled={enviando}
-        className="flex-1 rounded-lg bg-blue-700 py-2.5 font-semibold text-white hover:bg-blue-800 disabled:opacity-60">
+        className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-acento px-4 py-2.5 font-medium text-sobre-acento transition-colors hover:bg-acento-fuerte disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento">
         {enviando ? "Guardando..." : texto}
       </button>
     </div>
@@ -359,21 +404,21 @@ function FormularioNuevo({ sucursales, onCancelar, onCreado }) {
   return (
     <Ventana titulo="Nuevo usuario" onSubmit={guardar}>
       <div>
-        <label htmlFor="nuevo-usuario" className="block text-sm font-medium text-slate-700">Usuario (para iniciar sesión)</label>
+        <label htmlFor="nuevo-usuario" className="block text-sm font-medium text-texto-suave">Usuario (para iniciar sesión)</label>
         <input id="nuevo-usuario" required autoCapitalize="none" autoComplete="off" placeholder="ej. mariana"
           value={usuario} onChange={(e) => setUsuario(e.target.value)} className={`mt-1 ${estiloInput}`} />
       </div>
       <div>
-        <label htmlFor="nuevo-nombre" className="block text-sm font-medium text-slate-700">Nombre completo</label>
+        <label htmlFor="nuevo-nombre" className="block text-sm font-medium text-texto-suave">Nombre completo</label>
         <input id="nuevo-nombre" required value={nombre} onChange={(e) => setNombre(e.target.value)} className={`mt-1 ${estiloInput}`} />
       </div>
       <div>
-        <label htmlFor="nuevo-email" className="block text-sm font-medium text-slate-700">Correo (opcional)</label>
+        <label htmlFor="nuevo-email" className="block text-sm font-medium text-texto-suave">Correo (opcional)</label>
         <input id="nuevo-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={`mt-1 ${estiloInput}`} />
       </div>
       <CamposRolSucursal rol={rol} setRol={setRol} sucursalId={sucursalId} setSucursalId={setSucursalId} sucursales={sucursales} />
-      <p className="text-xs text-slate-500">Se generará una contraseña temporal que verás una sola vez.</p>
-      {error && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+      <p className="text-xs text-texto-suave">Se generará una contraseña temporal que verás una sola vez.</p>
+      {error && <p role="alert" className="rounded-lg border border-peligro/30 bg-peligro/10 px-3 py-2 text-sm text-peligro">{error}</p>}
       <BotonesFormulario onCancelar={onCancelar} enviando={enviando} texto="Crear usuario" />
     </Ventana>
   );
@@ -415,12 +460,12 @@ function FormularioEditar({ usuario, esYo, sucursales, onCancelar, onGuardado })
       <CamposRolSucursal rol={rol} setRol={setRol} sucursalId={sucursalId} setSucursalId={setSucursalId}
         sucursales={sucursales} rolBloqueado={esYo} />
       {esYo && (
-        <p className="text-xs text-slate-500">No puedes cambiar tu propio rol, para no quedarte sin acceso de Admin.</p>
+        <p className="text-xs text-texto-suave">No puedes cambiar tu propio rol, para no quedarte sin acceso de Admin.</p>
       )}
       {usuario.rol !== rol && (
-        <p className="text-xs text-amber-700">El cambio de rol se aplica la próxima vez que inicie sesión.</p>
+        <p className="text-xs text-alerta">El cambio de rol se aplica la próxima vez que inicie sesión.</p>
       )}
-      {error && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+      {error && <p role="alert" className="rounded-lg border border-peligro/30 bg-peligro/10 px-3 py-2 text-sm text-peligro">{error}</p>}
       <BotonesFormulario onCancelar={onCancelar} enviando={enviando} texto="Guardar" />
     </Ventana>
   );

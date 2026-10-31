@@ -6,6 +6,7 @@
 // Usa: GET/POST /api/seguimientos, PATCH /api/seguimientos/:id y GET /api/clientes
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import { Clock, Plus, Search } from "lucide-react";
 import { api } from "../api.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 
@@ -17,8 +18,16 @@ const LIMITE = 200;
 
 const formatoFechaHora = new Intl.DateTimeFormat("es-MX", { dateStyle: "short", timeStyle: "short" });
 
+// Receta de Input / select / textarea con los tokens del tema
 const estiloInput =
-  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200";
+  "w-full rounded-lg border border-borde bg-superficie-2 px-3 py-2 text-base text-texto outline-none placeholder:text-texto-suave focus:border-acento focus:ring-2 focus:ring-acento/30";
+
+// Recetas de botones. SIN padding (px/py): cada botón pone el suyo,
+// porque si se juntan dos clases de padding no se sabe cuál gana.
+const estiloBotonPrimario =
+  "inline-flex items-center justify-center gap-2 rounded-lg bg-acento font-medium text-sobre-acento transition-colors hover:bg-acento-fuerte disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento";
+const estiloBotonSecundario =
+  "inline-flex items-center justify-center gap-2 rounded-lg border border-borde bg-superficie-2 text-texto transition-colors hover:border-acento/50 disabled:opacity-50";
 
 // ---------- Semáforo ----------
 
@@ -34,34 +43,37 @@ function colorSemaforo(minutos) {
   return "rojo";
 }
 
+// Colores del semáforo: verde = exito, amarillo = alerta, rojo = peligro.
+// "texto" incluye también el fondo tenue del badge.
 const ESTILOS_SEMAFORO = {
-  verde: { punto: "bg-green-500", texto: "text-green-700" },
-  amarillo: { punto: "bg-amber-400", texto: "text-amber-700" },
-  rojo: { punto: "bg-red-600", texto: "text-red-700" },
+  verde: { punto: "bg-exito", texto: "bg-exito/10 text-exito" },
+  amarillo: { punto: "bg-alerta", texto: "bg-alerta/10 text-alerta" },
+  rojo: { punto: "bg-peligro", texto: "bg-peligro/10 text-peligro" },
 };
 
-// Punto de color + minutos. El nombre del color va en texto para lectores de pantalla.
+// Badge con punto de color + reloj + minutos. El nombre del color va en texto para lectores de pantalla.
 function Semaforo({ seguimiento, ahora }) {
   const minutos = minutosDe(seguimiento, ahora);
   const color = colorSemaforo(minutos);
   const sinRespuesta = !seguimiento.primera_respuesta_en;
   return (
-    <span className={`inline-flex items-center gap-1.5 text-sm font-medium ${ESTILOS_SEMAFORO[color].texto}`}>
-      <span className={`h-3 w-3 shrink-0 rounded-full ${ESTILOS_SEMAFORO[color].punto}`} aria-hidden="true" />
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${ESTILOS_SEMAFORO[color].texto}`}>
+      <span className={`size-2 shrink-0 rounded-full ${ESTILOS_SEMAFORO[color].punto}`} aria-hidden="true" />
       <span className="sr-only">Semáforo {color}:</span>
+      <Clock className="size-3.5 shrink-0" strokeWidth={2} aria-hidden="true" />
       {minutos} min{sinRespuesta ? " sin respuesta" : ""}
     </span>
   );
 }
 
-// Etiqueta del estado del seguimiento
+// Etiqueta del estado del seguimiento (badge con los tokens del tema)
 const COLORES_ESTADO = {
-  Abierto: "bg-blue-50 text-blue-700",
-  "En proceso": "bg-amber-50 text-amber-700",
-  Cerrado: "bg-slate-100 text-slate-500",
+  Abierto: "bg-acento/10 text-acento",
+  "En proceso": "bg-alerta/10 text-alerta",
+  Cerrado: "bg-superficie-2 text-texto-suave",
 };
 function EstadoSeguimiento({ estado }) {
-  return <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${COLORES_ESTADO[estado]}`}>{estado}</span>;
+  return <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${COLORES_ESTADO[estado]}`}>{estado}</span>;
 }
 
 // ---------- Página ----------
@@ -143,14 +155,15 @@ export default function Seguimientos() {
     return (
       <div className="flex gap-2">
         {s.estado === "Abierto" && (
+          // Botón secundario (versión pequeña)
           <button onClick={() => cambiarEstado(s, "En proceso")} disabled={ocupado === s.id}
-            className="rounded-lg border border-blue-600 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-50 disabled:opacity-60">
+            className={`${estiloBotonSecundario} px-3 py-1.5 text-sm font-medium`}>
             Atender
           </button>
         )}
         {puedeCerrar && (
           <button onClick={() => cambiarEstado(s, "Cerrado")} disabled={ocupado === s.id}
-            className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-60">
+            className={`${estiloBotonSecundario} px-3 py-1.5 text-sm`}>
             Cerrar
           </button>
         )}
@@ -163,17 +176,27 @@ export default function Seguimientos() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-slate-800">Seguimientos</h1>
+        <h1 className="text-2xl font-bold text-texto">Seguimientos</h1>
+        {/* El "+" del texto ahora es el ícono Plus */}
         <button onClick={() => { setAviso(""); setMostrarFormulario(true); }}
-          className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800">
-          + Nuevo
+          className={`${estiloBotonPrimario} px-4 py-2 text-sm`}>
+          <Plus className="size-4" strokeWidth={2} aria-hidden="true" />
+          Nuevo
         </button>
       </div>
 
       {/* ===== Filtros ===== */}
       <div className="grid gap-3 md:grid-cols-2">
-        <input type="search" placeholder="Buscar folio o cliente" aria-label="Buscar folio o cliente"
-          value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className={estiloInput} />
+        {/* Buscador con lupa: "relative" para colocar la lupa encima; pl-9 deja su espacio */}
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-texto-suave"
+            strokeWidth={2}
+            aria-hidden="true"
+          />
+          <input type="search" placeholder="Buscar folio o cliente" aria-label="Buscar folio o cliente"
+            value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className={`${estiloInput} pl-9`} />
+        </div>
         <select aria-label="Estado" value={estado} onChange={(e) => setEstado(e.target.value)} className={estiloInput}>
           <option value="">Todos los estados</option>
           {ESTADOS.map((e) => <option key={e} value={e}>{e}</option>)}
@@ -181,17 +204,17 @@ export default function Seguimientos() {
       </div>
 
       {/* Leyenda del semáforo */}
-      <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
-        <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-green-500" />menos de 10 min</span>
-        <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-amber-400" />10 a 15 min</span>
-        <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-red-600" />más de 15 min</span>
+      <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-texto-suave">
+        <span className="inline-flex items-center gap-1"><span className="size-2.5 rounded-full bg-exito" />menos de 10 min</span>
+        <span className="inline-flex items-center gap-1"><span className="size-2.5 rounded-full bg-alerta" />10 a 15 min</span>
+        <span className="inline-flex items-center gap-1"><span className="size-2.5 rounded-full bg-peligro" />más de 15 min</span>
       </p>
 
       {/* ===== Mensajes ===== */}
-      {aviso && <p role="status" className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">{aviso}</p>}
-      {error && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+      {aviso && <p role="status" className="rounded-lg border border-exito/30 bg-exito/10 px-3 py-2 text-sm text-exito">{aviso}</p>}
+      {error && <p role="alert" className="rounded-lg border border-peligro/30 bg-peligro/10 px-3 py-2 text-sm text-peligro">{error}</p>}
       {!resultado.error && (
-        <p className="text-sm text-slate-500" aria-live="polite">
+        <p className="text-sm text-texto-suave" aria-live="polite">
           {cargando
             ? "Cargando..."
             : visibles.length === 0
@@ -205,19 +228,20 @@ export default function Seguimientos() {
       {/* ===== Celular: tarjetas ===== */}
       <ul className="space-y-2 md:hidden">
         {visibles.map((s) => (
-          <li key={s.id} className={`rounded-xl bg-white p-4 shadow ${s.vencido ? "border-l-4 border-red-500" : ""}`}>
+          // Vencido: franja roja a la izquierda
+          <li key={s.id} className={`rounded-xl border border-borde bg-superficie p-4 shadow-sm ${s.vencido ? "border-l-4 border-l-peligro" : ""}`}>
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="font-semibold text-slate-800">{s.motivo}</p>
-                <p className="truncate text-sm text-slate-600">
+                <p className="font-semibold text-texto">{s.motivo}</p>
+                <p className="truncate text-sm text-texto-suave">
                   {s.cliente ?? "Sin cliente"}
-                  {s.folio && <> · <Link to={`/pedidos/${s.folio}`} className="text-blue-700 hover:underline">{s.folio}</Link></>}
+                  {s.folio && <> · <Link to={`/pedidos/${s.folio}`} className="text-acento hover:underline">{s.folio}</Link></>}
                 </p>
               </div>
               <EstadoSeguimiento estado={s.estado} />
             </div>
-            <p className="mt-2 text-sm text-slate-700">{s.descripcion}</p>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-2 text-sm text-texto">{s.descripcion}</p>
+            <p className="mt-1 text-xs text-texto-suave">
               {s.canal} · {formatoFechaHora.format(new Date(s.creado_en))} · Responsable: {s.responsable ?? "—"}
               {s.origen === "ia" && " · Registrado por el asistente"}
             </p>
@@ -231,9 +255,9 @@ export default function Seguimientos() {
 
       {/* ===== Escritorio: tabla ===== */}
       {visibles.length > 0 && (
-        <div className="hidden overflow-hidden rounded-xl bg-white shadow md:block">
+        <div className="hidden overflow-x-auto rounded-xl border border-borde bg-superficie shadow-sm md:block">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-600">
+            <thead className="bg-superficie-2 text-xs uppercase tracking-wide text-texto-suave">
               <tr>
                 <th className="px-4 py-3 font-medium">Semáforo</th>
                 <th className="px-4 py-3 font-medium">Cliente / pedido</th>
@@ -244,24 +268,25 @@ export default function Seguimientos() {
                 <th className="px-4 py-3"><span className="sr-only">Acciones</span></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-borde">
               {visibles.map((s) => (
-                <tr key={s.id} className={s.vencido ? "bg-red-50" : ""}>
+                // Vencido: fila con fondo rojo tenue
+                <tr key={s.id} className={`transition-colors ${s.vencido ? "bg-peligro/10 hover:bg-peligro/15" : "hover:bg-superficie-2/60"}`}>
                   <td className="whitespace-nowrap px-4 py-3"><Semaforo seguimiento={s} ahora={ahora} /></td>
                   <td className="px-4 py-3">
-                    <p className="text-slate-800">{s.cliente ?? "—"}</p>
-                    {s.folio && <Link to={`/pedidos/${s.folio}`} className="text-xs text-blue-700 hover:underline">{s.folio}</Link>}
+                    <p className="text-texto">{s.cliente ?? "—"}</p>
+                    {s.folio && <Link to={`/pedidos/${s.folio}`} className="text-xs text-acento hover:underline">{s.folio}</Link>}
                   </td>
                   <td className="px-4 py-3">
-                    <p className="text-slate-800">{s.motivo}</p>
-                    <p className="text-xs text-slate-500">{s.descripcion}</p>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-texto">{s.motivo}</p>
+                    <p className="text-xs text-texto-suave">{s.descripcion}</p>
+                    <p className="text-xs text-texto-suave opacity-80">
                       {formatoFechaHora.format(new Date(s.creado_en))}
                       {s.origen === "ia" && " · Registrado por el asistente"}
                     </p>
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{s.canal}</td>
-                  <td className="px-4 py-3 text-slate-600">{s.responsable ?? "—"}</td>
+                  <td className="px-4 py-3 text-texto-suave">{s.canal}</td>
+                  <td className="px-4 py-3 text-texto-suave">{s.responsable ?? "—"}</td>
                   <td className="px-4 py-3"><EstadoSeguimiento estado={s.estado} /></td>
                   <td className="px-4 py-3"><Acciones s={s} /></td>
                 </tr>
@@ -326,34 +351,39 @@ function FormularioSeguimiento({ onCancelar, onCreado }) {
   }
 
   return (
-    <div className="fixed inset-0 z-30 flex items-end justify-center bg-black/40 sm:items-center sm:p-4"
+    // Fondo oscuro semitransparente detrás de la ventana
+    <div className="fixed inset-0 z-30 flex items-end justify-center bg-black/60 sm:items-center sm:p-4"
       role="dialog" aria-modal="true" aria-labelledby="titulo-seguimiento">
+      {/* La ventana: panel sólido con borde sutil */}
       <form onSubmit={guardar}
-        className="max-h-[90vh] w-full max-w-md space-y-4 overflow-y-auto rounded-t-2xl bg-white p-6 sm:rounded-2xl">
-        <h2 id="titulo-seguimiento" className="text-lg font-bold text-slate-800">Nuevo seguimiento</h2>
+        className="max-h-[90vh] w-full max-w-md space-y-4 overflow-y-auto rounded-t-2xl border border-borde bg-superficie p-6 text-texto shadow-sm sm:rounded-2xl">
+        <h2 id="titulo-seguimiento" className="text-lg font-bold text-texto">Nuevo seguimiento</h2>
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <label htmlFor="folio" className="block text-sm font-medium text-slate-700">Folio del pedido</label>
+            <label htmlFor="folio" className="block text-sm font-medium text-texto-suave">Folio del pedido</label>
             <input id="folio" placeholder="RC-0001" autoCapitalize="characters" value={folio}
               onChange={(e) => setFolio(e.target.value)} className={`mt-1 ${estiloInput}`} />
           </div>
           <div>
-            <label htmlFor="cliente" className="block text-sm font-medium text-slate-700">Cliente</label>
+            <label htmlFor="cliente" className="block text-sm font-medium text-texto-suave">Cliente</label>
             <select id="cliente" value={clienteId} onChange={(e) => setClienteId(e.target.value)} className={`mt-1 ${estiloInput}`}>
               <option value="">— Elegir —</option>
               {clientes.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
             </select>
           </div>
         </div>
-        <p className="-mt-2 text-xs text-slate-500">Basta con uno: si pones el folio, el cliente se toma del pedido.</p>
+        <p className="-mt-2 text-xs text-texto-suave">Basta con uno: si pones el folio, el cliente se toma del pedido.</p>
 
+        {/* Canal: botones tipo "pastilla"; has-focus-visible muestra un anillo al llegar con el teclado */}
         <fieldset>
-          <legend className="text-sm font-medium text-slate-700">Canal</legend>
+          <legend className="text-sm font-medium text-texto-suave">Canal</legend>
           <div className="mt-1 grid grid-cols-3 gap-2">
             {CANALES.map((c) => (
-              <label key={c} className={`cursor-pointer rounded-lg border px-2 py-2 text-center text-sm ${
-                canal === c ? "border-blue-600 bg-blue-50 font-semibold text-blue-700" : "border-slate-300 text-slate-700"
+              <label key={c} className={`cursor-pointer rounded-lg border px-2 py-2 text-center text-sm transition-colors has-focus-visible:ring-2 has-focus-visible:ring-acento/30 ${
+                canal === c
+                  ? "border-acento bg-acento/10 font-medium text-acento"
+                  : "border-borde bg-superficie-2 text-texto-suave hover:text-texto"
               }`}>
                 <input type="radio" name="canal" value={c} checked={canal === c} onChange={() => setCanal(c)} className="sr-only" />
                 {c}
@@ -363,7 +393,7 @@ function FormularioSeguimiento({ onCancelar, onCreado }) {
         </fieldset>
 
         <div>
-          <label htmlFor="motivo" className="block text-sm font-medium text-slate-700">Motivo</label>
+          <label htmlFor="motivo" className="block text-sm font-medium text-texto-suave">Motivo</label>
           {/* list= muestra sugerencias, pero se puede escribir cualquier motivo */}
           <input id="motivo" list="motivos" required value={motivo}
             onChange={(e) => setMotivo(e.target.value)} className={`mt-1 ${estiloInput}`} />
@@ -373,21 +403,20 @@ function FormularioSeguimiento({ onCancelar, onCreado }) {
         </div>
 
         <div>
-          <label htmlFor="descripcion" className="block text-sm font-medium text-slate-700">Descripción</label>
+          <label htmlFor="descripcion" className="block text-sm font-medium text-texto-suave">Descripción</label>
           <textarea id="descripcion" rows={3} required value={descripcion}
             placeholder="¿Qué dijo el cliente?"
             onChange={(e) => setDescripcion(e.target.value)} className={`mt-1 ${estiloInput}`} />
         </div>
 
-        {error && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+        {error && <p role="alert" className="rounded-lg border border-peligro/30 bg-peligro/10 px-3 py-2 text-sm text-peligro">{error}</p>}
 
         <div className="flex gap-2">
-          <button type="button" onClick={onCancelar}
-            className="flex-1 rounded-lg border border-slate-300 py-2.5 text-slate-700 hover:bg-slate-50">
+          <button type="button" onClick={onCancelar} className={`${estiloBotonSecundario} flex-1 px-4 py-2.5`}>
             Cancelar
           </button>
-          <button type="submit" disabled={enviando}
-            className="flex-1 rounded-lg bg-blue-700 py-2.5 font-semibold text-white hover:bg-blue-800 disabled:opacity-60">
+          <button type="submit" disabled={enviando} className={`${estiloBotonPrimario} flex-1 px-4 py-2.5`}>
+            <Plus className="size-4" strokeWidth={2} aria-hidden="true" />
             {enviando ? "Guardando..." : "Registrar"}
           </button>
         </div>

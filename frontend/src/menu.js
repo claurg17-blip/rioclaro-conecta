@@ -5,17 +5,20 @@
 // Si cambia un permiso, se cambia SOLO aquí.
 //
 // Ojo: esto solo oculta pantallas. La seguridad real está en el backend (requireRole).
+//
+// "icono" es un componente de lucide-react (no un texto): Layout.jsx lo dibuja como <o.icono />.
+import { Bot, Boxes, ClipboardList, LayoutDashboard, MessageSquareWarning, Package, UserCog } from "lucide-react";
 
 const TODOS = ["Admin", "Gerente", "Ventas", "Bodega"];
 
 export const OPCIONES_MENU = [
-  { ruta: "/", texto: "Inicio", icono: "🏠", roles: TODOS },
-  { ruta: "/catalogo", texto: "Catálogo", icono: "📦", roles: TODOS },
-  { ruta: "/existencias", texto: "Existencias", icono: "📊", roles: TODOS },
-  { ruta: "/pedidos", texto: "Pedidos", icono: "🧾", roles: TODOS },
-  { ruta: "/seguimientos", texto: "Seguimientos", icono: "📞", roles: ["Admin", "Gerente", "Ventas"] },
-  { ruta: "/asistente", texto: "Asistente", icono: "💬", roles: TODOS },
-  { ruta: "/admin", texto: "Admin", icono: "⚙️", roles: ["Admin"] },
+  { ruta: "/", texto: "Inicio", icono: LayoutDashboard, roles: TODOS },
+  { ruta: "/catalogo", texto: "Catálogo", icono: Package, roles: TODOS },
+  { ruta: "/existencias", texto: "Existencias", icono: Boxes, roles: TODOS },
+  { ruta: "/pedidos", texto: "Pedidos", icono: ClipboardList, roles: TODOS },
+  { ruta: "/seguimientos", texto: "Seguimientos", icono: MessageSquareWarning, roles: ["Admin", "Gerente", "Ventas"] },
+  { ruta: "/asistente", texto: "Asistente", icono: Bot, roles: TODOS },
+  { ruta: "/admin", texto: "Admin", icono: UserCog, roles: ["Admin"] },
 ];
 
 // Devuelve solo las opciones que puede ver un rol

@@ -4,6 +4,7 @@
 // - Bodega, Gerente y Admin pueden registrar movimientos (entrada, salida o ajuste).
 // Usa: GET /api/sucursales, GET /api/existencias y POST /api/movimientos.
 import { useEffect, useState } from "react";
+import { ArrowDownToLine, ArrowUpFromLine, Plus, Search, SlidersHorizontal, TriangleAlert } from "lucide-react";
 import { api } from "../api.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 
@@ -16,8 +17,9 @@ const formatoFecha = new Intl.DateTimeFormat("es-MX", { dateStyle: "short", time
 // Clave única de una fila (un producto en una sucursal)
 const claveFila = (e) => `${e.producto_id}-${e.sucursal_id}`;
 
+// Receta de Input / select / textarea con los tokens del tema
 const estiloInput =
-  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200";
+  "w-full rounded-lg border border-borde bg-superficie-2 px-3 py-2 text-base text-texto outline-none placeholder:text-texto-suave focus:border-acento focus:ring-2 focus:ring-acento/30";
 
 export default function Existencias() {
   const { usuario } = useAuth();
@@ -81,8 +83,9 @@ export default function Existencias() {
     return (
       <button
         onClick={() => { setAviso(""); setFilaMovimiento(fila); }}
-        className="shrink-0 rounded-lg border border-blue-600 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-50"
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-borde bg-superficie-2 px-3 py-1.5 text-sm font-medium text-texto transition-colors hover:border-acento/50"
       >
+        <Plus className="size-4" strokeWidth={2} aria-hidden="true" />
         Movimiento
       </button>
     );
@@ -90,7 +93,7 @@ export default function Existencias() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-slate-800">Existencias</h1>
+      <h1 className="text-2xl font-bold text-texto">Existencias</h1>
 
       {/* ===== Filtros ===== */}
       <div className="grid gap-3 md:grid-cols-3">
@@ -105,20 +108,29 @@ export default function Existencias() {
             <option key={s.id} value={s.id}>{s.nombre}</option>
           ))}
         </select>
-        <input
-          type="search"
-          placeholder="Buscar producto, SKU o alias"
-          aria-label="Buscar producto"
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          className={estiloInput}
-        />
-        <label className="flex items-center gap-2 text-sm text-slate-700">
+        {/* Buscador con lupa: "relative" para colocar la lupa encima; pl-9 deja su espacio */}
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-texto-suave"
+            strokeWidth={2}
+            aria-hidden="true"
+          />
+          <input
+            type="search"
+            placeholder="Buscar producto, SKU o alias"
+            aria-label="Buscar producto"
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            className={`${estiloInput} pl-9`}
+          />
+        </div>
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-texto-suave">
+          {/* accent-acento: la palomita de la casilla toma el color de acento */}
           <input
             type="checkbox"
             checked={soloBajoMinimo}
             onChange={(e) => setSoloBajoMinimo(e.target.checked)}
-            className="h-4 w-4"
+            className="size-4 accent-acento"
           />
           Solo bajo mínimo
         </label>
@@ -126,13 +138,13 @@ export default function Existencias() {
 
       {/* ===== Mensajes ===== */}
       {aviso && (
-        <p role="status" className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">{aviso}</p>
+        <p role="status" className="rounded-lg border border-exito/30 bg-exito/10 px-3 py-2 text-sm text-exito">{aviso}</p>
       )}
       {error && (
-        <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+        <p role="alert" className="rounded-lg border border-peligro/30 bg-peligro/10 px-3 py-2 text-sm text-peligro">{error}</p>
       )}
       {!error && (
-        <p className="text-sm text-slate-500" aria-live="polite">
+        <p className="text-sm text-texto-suave" aria-live="polite">
           {cargando
             ? "Buscando..."
             : existencias.length === 0
@@ -148,13 +160,17 @@ export default function Existencias() {
         {existencias.map((e) => (
           <li
             key={claveFila(e)}
-            className={`rounded-xl p-4 shadow ${e.bajo_minimo ? "border-l-4 border-red-500 bg-red-50" : "bg-white"}`}
+            // Bajo mínimo: fondo rojo tenue y franja roja a la izquierda
+            className={`rounded-xl border p-4 shadow-sm ${
+              e.bajo_minimo ? "border-peligro/30 border-l-4 border-l-peligro bg-peligro/10" : "border-borde bg-superficie"
+            }`}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="font-semibold text-slate-800">{e.nombre}</p>
-                <p className="text-sm text-slate-500">{e.sku} · {e.sucursal}</p>
-                <p className={`mt-1 text-sm ${e.bajo_minimo ? "font-semibold text-red-700" : "text-slate-700"}`}>
+                <p className="font-semibold text-texto">{e.nombre}</p>
+                <p className="text-sm text-texto-suave">{e.sku} · {e.sucursal}</p>
+                <p className={`mt-1 flex items-center gap-1.5 text-sm ${e.bajo_minimo ? "font-semibold text-peligro" : "text-texto"}`}>
+                  {e.bajo_minimo && <TriangleAlert className="size-4 shrink-0" strokeWidth={2} aria-hidden="true" />}
                   {e.cantidad} {e.unidad} (mínimo {e.minimo}){e.bajo_minimo && " · Bajo mínimo"}
                 </p>
               </div>
@@ -166,9 +182,9 @@ export default function Existencias() {
 
       {/* ===== Escritorio: tabla ===== */}
       {existencias.length > 0 && (
-        <div className="hidden overflow-hidden rounded-xl bg-white shadow md:block">
+        <div className="hidden overflow-x-auto rounded-xl border border-borde bg-superficie shadow-sm md:block">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-600">
+            <thead className="bg-superficie-2 text-xs uppercase tracking-wide text-texto-suave">
               <tr>
                 <th className="px-4 py-3 font-medium">Producto</th>
                 <th className="px-4 py-3 font-medium">Sucursal</th>
@@ -178,19 +194,24 @@ export default function Existencias() {
                 {puedeMover && <th className="px-4 py-3"><span className="sr-only">Acciones</span></th>}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-borde">
               {existencias.map((e) => (
-                <tr key={claveFila(e)} className={e.bajo_minimo ? "bg-red-50 text-red-700" : "text-slate-800"}>
+                // Bajo mínimo: fila con fondo rojo tenue (la cantidad va en rojo más abajo)
+                <tr key={claveFila(e)} className={`text-texto transition-colors ${
+                  e.bajo_minimo ? "bg-peligro/10 hover:bg-peligro/15" : "hover:bg-superficie-2/60"
+                }`}>
                   <td className="px-4 py-3">
                     {e.nombre}
-                    <span className="block font-mono text-xs opacity-70">{e.sku}</span>
+                    <span className="block font-mono text-xs text-texto-suave">{e.sku}</span>
                   </td>
                   <td className="px-4 py-3">{e.sucursal}</td>
-                  <td className={`whitespace-nowrap px-4 py-3 text-right ${e.bajo_minimo ? "font-semibold" : ""}`}>
+                  <td className={`whitespace-nowrap px-4 py-3 text-right ${e.bajo_minimo ? "font-semibold text-peligro" : ""}`}>
+                    {/* inline-block: los svg de Tailwind son "block" por defecto; así queda junto al número */}
+                    {e.bajo_minimo && <TriangleAlert className="mr-1 inline-block size-4 align-[-3px]" strokeWidth={2} aria-hidden="true" />}
                     {e.cantidad} {e.unidad}
                   </td>
-                  <td className="px-4 py-3 text-right">{e.minimo}</td>
-                  <td className="whitespace-nowrap px-4 py-3 opacity-70">
+                  <td className="px-4 py-3 text-right text-texto-suave">{e.minimo}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-texto-suave">
                     {e.actualizado_en ? formatoFecha.format(new Date(e.actualizado_en)) : "—"}
                   </td>
                   {puedeMover && (
@@ -256,32 +277,41 @@ function FormularioMovimiento({ fila, onCancelar, onGuardado }) {
 
   return (
     <div
-      className="fixed inset-0 z-30 flex items-end justify-center bg-black/40 sm:items-center sm:p-4"
+      // Fondo oscuro semitransparente detrás de la ventana
+      className="fixed inset-0 z-30 flex items-end justify-center bg-black/60 sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="titulo-movimiento"
     >
-      <form onSubmit={guardar} className="w-full max-w-md space-y-4 rounded-t-2xl bg-white p-6 sm:rounded-2xl">
+      {/* La ventana: panel sólido con borde sutil */}
+      <form onSubmit={guardar} className="w-full max-w-md space-y-4 rounded-t-2xl border border-borde bg-superficie p-6 text-texto shadow-sm sm:rounded-2xl">
         <div>
-          <h2 id="titulo-movimiento" className="text-lg font-bold text-slate-800">Registrar movimiento</h2>
-          <p className="text-sm text-slate-600">
-            {fila.nombre} · {fila.sucursal} · Existencia actual: <strong>{fila.cantidad}</strong>
+          <h2 id="titulo-movimiento" className="text-lg font-bold text-texto">Registrar movimiento</h2>
+          <p className="text-sm text-texto-suave">
+            {fila.nombre} · {fila.sucursal} · Existencia actual: <strong className="text-texto">{fila.cantidad}</strong>
           </p>
         </div>
 
-        {/* Tipo de movimiento */}
+        {/* Tipo de movimiento: cada opción es un botón con ícono.
+            has-focus-visible: muestra un anillo al llegar con el teclado (el radio está oculto con sr-only) */}
         <fieldset>
-          <legend className="text-sm font-medium text-slate-700">Tipo</legend>
+          <legend className="text-sm font-medium text-texto-suave">Tipo</legend>
           <div className="mt-1 grid grid-cols-3 gap-2">
             {["entrada", "salida", "ajuste"].map((t) => (
               <label
                 key={t}
-                className={`cursor-pointer rounded-lg border px-3 py-2 text-center text-sm capitalize ${
-                  tipo === t ? "border-blue-600 bg-blue-50 font-semibold text-blue-700" : "border-slate-300 text-slate-700"
+                className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-center text-sm capitalize transition-colors has-focus-visible:ring-2 has-focus-visible:ring-acento/30 ${
+                  tipo === t
+                    ? "border-acento bg-acento/10 font-medium text-acento"
+                    : "border-borde bg-superficie-2 text-texto-suave hover:text-texto"
                 }`}
               >
                 <input type="radio" name="tipo" value={t} checked={tipo === t}
                   onChange={() => setTipo(t)} className="sr-only" />
+                {/* Ícono según el tipo: entrada ↓, salida ↑, ajuste (deslizadores) */}
+                {t === "entrada" && <ArrowDownToLine className="size-4" strokeWidth={2} aria-hidden="true" />}
+                {t === "salida" && <ArrowUpFromLine className="size-4" strokeWidth={2} aria-hidden="true" />}
+                {t === "ajuste" && <SlidersHorizontal className="size-4" strokeWidth={2} aria-hidden="true" />}
                 {t}
               </label>
             ))}
@@ -289,17 +319,17 @@ function FormularioMovimiento({ fila, onCancelar, onGuardado }) {
         </fieldset>
 
         <div>
-          <label htmlFor="cantidad" className="block text-sm font-medium text-slate-700">Cantidad</label>
+          <label htmlFor="cantidad" className="block text-sm font-medium text-texto-suave">Cantidad</label>
           <input id="cantidad" type="number" inputMode="numeric" step="1" required autoFocus
             min={tipo === "ajuste" ? undefined : 1}
             value={cantidad} onChange={(e) => setCantidad(e.target.value)} className={`mt-1 ${estiloInput}`} />
           {tipo === "ajuste" && (
-            <p className="mt-1 text-xs text-slate-500">Usa número negativo para restar (ej. -3) o positivo para sumar.</p>
+            <p className="mt-1 text-xs text-texto-suave">Usa número negativo para restar (ej. -3) o positivo para sumar.</p>
           )}
         </div>
 
         <div>
-          <label htmlFor="nota" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="nota" className="block text-sm font-medium text-texto-suave">
             Nota {tipo === "ajuste" ? "(obligatoria)" : "(opcional)"}
           </label>
           <textarea id="nota" rows={2} required={tipo === "ajuste"}
@@ -307,16 +337,18 @@ function FormularioMovimiento({ fila, onCancelar, onGuardado }) {
         </div>
 
         {error && (
-          <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+          <p role="alert" className="rounded-lg border border-peligro/30 bg-peligro/10 px-3 py-2 text-sm text-peligro">{error}</p>
         )}
 
         <div className="flex gap-2">
+          {/* Botón secundario */}
           <button type="button" onClick={onCancelar}
-            className="flex-1 rounded-lg border border-slate-300 py-2.5 text-slate-700 hover:bg-slate-50">
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-borde bg-superficie-2 px-4 py-2.5 text-texto transition-colors hover:border-acento/50">
             Cancelar
           </button>
+          {/* Botón primario */}
           <button type="submit" disabled={enviando}
-            className="flex-1 rounded-lg bg-blue-700 py-2.5 font-semibold text-white hover:bg-blue-800 disabled:opacity-60">
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-acento px-4 py-2.5 font-medium text-sobre-acento transition-colors hover:bg-acento-fuerte disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento">
             {enviando ? "Guardando..." : "Guardar"}
           </button>
         </div>

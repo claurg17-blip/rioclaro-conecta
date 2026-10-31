@@ -7,6 +7,7 @@
 // Usa: POST /api/agente/chat → { texto, fuentes, conversacionId }
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
+import { ArrowLeft, Bot, FileText, Info, LoaderCircle, Plus, SendHorizontal, User } from "lucide-react";
 import { api } from "../api.js";
 
 const MAX_MENSAJE = 1000; // mismo tope que valida el backend
@@ -24,6 +25,10 @@ const EJEMPLOS = [
   "¿Dónde está el pedido RC-1042?",
   "Últimos pedidos del Hotel Las Palmas",
 ];
+
+// Avatares redondos junto a las burbujas (clases puestas directo en el ícono)
+const estiloAvatarAsistente = "size-7 shrink-0 rounded-full bg-acento/10 p-1.5 text-acento";
+const estiloAvatarUsuario = "size-7 shrink-0 rounded-full bg-superficie-2 p-1.5 text-texto-suave";
 
 export default function Asistente() {
   const navigate = useNavigate();
@@ -101,49 +106,61 @@ export default function Asistente() {
   return (
     // Celular: capa fija que cubre toda la pantalla (h-dvh se ajusta cuando sale el teclado).
     // Escritorio (md): se queda dentro del Layout; alto = pantalla − barra (3.5rem) − márgenes del main (2.5rem).
-    <div className="fixed inset-0 z-30 flex h-dvh flex-col bg-slate-100 pt-[env(safe-area-inset-top)]
-                    md:static md:z-auto md:h-[calc(100dvh-6rem)] md:overflow-hidden md:rounded-xl md:bg-white md:pt-0 md:shadow">
+    // Celular: fondo de la página. Escritorio: un panel (tarjeta) con borde sutil.
+    <div className="fixed inset-0 z-30 flex h-dvh flex-col bg-fondo pt-[env(safe-area-inset-top)]
+                    md:static md:z-auto md:h-[calc(100dvh-6rem)] md:overflow-hidden md:rounded-xl md:border md:border-borde md:bg-superficie md:pt-0 md:shadow-sm">
 
       {/* ===== Encabezado ===== */}
-      <header className="flex shrink-0 items-center gap-2 bg-blue-700 px-3 py-2 text-white md:bg-white md:px-4 md:py-3 md:text-slate-800">
+      <header className="flex shrink-0 items-center gap-2 border-b border-borde bg-superficie px-3 py-2 text-texto md:px-4 md:py-3">
+        {/* La flecha "←" ahora es el ícono ArrowLeft */}
         <button
           onClick={() => navigate("/")}
-          className="rounded-lg px-2 py-1.5 text-sm hover:bg-white/10 md:hidden"
+          className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm text-texto-suave transition-colors hover:bg-superficie-2 hover:text-texto md:hidden"
           aria-label="Volver al inicio"
         >
-          ← Volver
+          <ArrowLeft className="size-4" strokeWidth={2} aria-hidden="true" />
+          Volver
         </button>
-        <h1 className="flex-1 text-lg font-bold md:text-2xl">Asistente</h1>
+        <h1 className="flex flex-1 items-center gap-2 text-lg font-bold md:text-2xl">
+          {/* Ícono del asistente en un cuadro de acento */}
+          <Bot className="size-8 rounded-lg bg-acento/10 p-1.5 text-acento" strokeWidth={2} aria-hidden="true" />
+          Asistente
+        </h1>
         {mensajes.length > 0 && (
+          // Botón secundario (versión pequeña)
           <button
             onClick={nuevaConversacion}
             disabled={escribiendo}
-            className="rounded-lg border border-white/40 px-3 py-1.5 text-sm hover:bg-white/10 disabled:opacity-50
-                       md:border-blue-600 md:text-blue-700 md:hover:bg-blue-50"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-borde bg-superficie-2 px-3 py-1.5 text-sm text-texto transition-colors hover:border-acento/50 disabled:opacity-50"
           >
+            <Plus className="size-4" strokeWidth={2} aria-hidden="true" />
             Nueva conversación
           </button>
         )}
       </header>
 
       {/* ===== Aviso fijo de IA (no se mueve al hacer scroll) ===== */}
-      <p role="note" className="shrink-0 border-y border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
-        ⚠️ Estás hablando con un asistente de IA. Verifica antes de prometer al cliente.
+      <p role="note" className="mx-3 mt-3 flex shrink-0 items-start gap-2 rounded-lg border border-alerta/30 bg-alerta/10 px-3 py-2 text-sm text-alerta md:mx-4">
+        <Info className="mt-0.5 size-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+        Estás hablando con un asistente de IA. Verifica antes de prometer al cliente.
       </p>
 
       {/* ===== Mensajes (esta es la única parte con scroll) ===== */}
       <div role="log" aria-live="polite" className="flex-1 space-y-3 overflow-y-auto px-3 py-4 md:px-4">
         {/* Chat vacío: explicación y preguntas de ejemplo */}
         {mensajes.length === 0 && (
-          <div className="mx-auto max-w-md pt-6 text-center text-slate-600">
-            <p className="text-4xl" aria-hidden="true">💬</p>
-            <p className="mt-2">Pregúntame por existencias, pedidos o registra un seguimiento.</p>
+          <div className="mx-auto max-w-md pt-6 text-center text-texto-suave">
+            {/* El 💬 ahora es el ícono Bot grande, centrado */}
+            <p className="flex justify-center" aria-hidden="true">
+              <Bot className="size-14 rounded-2xl bg-acento/10 p-3 text-acento" strokeWidth={2} aria-hidden="true" />
+            </p>
+            <p className="mt-3">Pregúntame por existencias, pedidos o registra un seguimiento.</p>
             <div className="mt-4 flex flex-col gap-2">
               {EJEMPLOS.map((ejemplo) => (
                 <button
                   key={ejemplo}
                   onClick={() => enviar(ejemplo)}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  className="rounded-lg border border-borde bg-superficie-2 px-3 py-2 text-sm text-texto transition-colors hover:border-acento/50"
                 >
                   {ejemplo}
                 </button>
@@ -156,18 +173,22 @@ export default function Asistente() {
 
         {/* Indicador "escribiendo…" mientras esperamos la respuesta */}
         {escribiendo && (
-          <div className="flex justify-start">
-            <div className="flex items-center gap-1 rounded-2xl rounded-bl-sm bg-white px-4 py-3 shadow-sm md:bg-slate-100">
+          <div className="flex items-end justify-start gap-2">
+            <Bot className={estiloAvatarAsistente} strokeWidth={2} aria-hidden="true" />
+            <div className="flex items-center gap-1 rounded-2xl rounded-bl-sm border border-borde bg-superficie px-4 py-3">
               <span className="sr-only">El asistente está escribiendo…</span>
+              {/* Puntitos que rebotan, en color de acento */}
               {[0, 150, 300].map((retraso) => (
                 <span
                   key={retraso}
                   aria-hidden="true"
-                  className="h-2 w-2 animate-bounce rounded-full bg-slate-400"
+                  className="size-2 animate-bounce rounded-full bg-acento"
                   style={{ animationDelay: `${retraso}ms` }}
                 />
               ))}
-              <span aria-hidden="true" className="ml-2 text-xs text-slate-500">escribiendo…</span>
+              {/* Ruedita que gira (animate-spin), junto al texto */}
+              <LoaderCircle className="ml-2 size-3.5 animate-spin text-texto-suave" strokeWidth={2} aria-hidden="true" />
+              <span aria-hidden="true" className="ml-1 text-xs text-texto-suave">escribiendo…</span>
             </div>
           </div>
         )}
@@ -178,7 +199,7 @@ export default function Asistente() {
       {/* ===== Campo para escribir ===== */}
       <form
         onSubmit={(e) => { e.preventDefault(); enviar(texto); }}
-        className="flex shrink-0 items-end gap-2 border-t border-slate-200 bg-white px-3 pt-3
+        className="flex shrink-0 items-end gap-2 border-t border-borde bg-superficie px-3 pt-3
                    pb-[max(0.75rem,env(safe-area-inset-bottom))] md:px-4"
       >
         <div className="flex-1">
@@ -192,42 +213,47 @@ export default function Asistente() {
             onKeyDown={alPresionarTecla}
             maxLength={MAX_MENSAJE}
             placeholder="Escribe tu pregunta…"
-            className="max-h-32 w-full resize-none rounded-2xl border border-slate-300 bg-white px-4 py-2 text-base
-                       focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            className="max-h-32 w-full resize-none rounded-2xl border border-borde bg-superficie-2 px-4 py-2 text-base text-texto
+                       outline-none placeholder:text-texto-suave focus:border-acento focus:ring-2 focus:ring-acento/30"
           />
           {/* Contador solo cuando ya se acerca al límite */}
           {texto.length > MAX_MENSAJE - 100 && (
-            <p className="px-2 text-right text-xs text-slate-500">{texto.length}/{MAX_MENSAJE}</p>
+            <p className="px-2 text-right text-xs text-texto-suave">{texto.length}/{MAX_MENSAJE}</p>
           )}
         </div>
+        {/* Botón primario solo con ícono: aria-label le da nombre para lectores de pantalla */}
         <button
           type="submit"
           disabled={escribiendo || !texto.trim()}
-          className="mb-0.5 rounded-full bg-blue-700 px-4 py-2 font-medium text-white hover:bg-blue-800 disabled:opacity-50"
+          aria-label="Enviar"
+          className="mb-0.5 inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-acento text-sobre-acento transition-colors hover:bg-acento-fuerte disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento"
         >
-          Enviar
+          <SendHorizontal className="size-4" strokeWidth={2} aria-hidden="true" />
         </button>
       </form>
     </div>
   );
 }
 
-// Una burbuja del chat: pregunta (derecha, azul), respuesta (izquierda, blanca) o error (rojo).
+// Una burbuja del chat: pregunta (derecha, acento), respuesta (izquierda, superficie) o error (rojo).
+// Cada una lleva un avatar redondo: User para la persona, Bot para el asistente.
 function Burbuja({ mensaje, onReintentar }) {
   if (mensaje.tipo === "usuario") {
     return (
-      <div className="flex justify-end">
-        <p className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-br-sm bg-blue-700 px-4 py-2 text-white md:max-w-[70%]">
+      <div className="flex items-end justify-end gap-2">
+        <p className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-br-sm bg-acento px-4 py-2 text-sobre-acento md:max-w-[70%]">
           {mensaje.texto}
         </p>
+        <User className={estiloAvatarUsuario} strokeWidth={2} aria-hidden="true" />
       </div>
     );
   }
 
   if (mensaje.tipo === "error") {
     return (
-      <div className="flex justify-start">
-        <div role="alert" className="max-w-[85%] rounded-2xl rounded-bl-sm border border-red-200 bg-red-50 px-4 py-2 text-red-800 md:max-w-[70%]">
+      <div className="flex items-end justify-start gap-2">
+        <Bot className={estiloAvatarAsistente} strokeWidth={2} aria-hidden="true" />
+        <div role="alert" className="max-w-[85%] rounded-2xl rounded-bl-sm border border-peligro/30 bg-peligro/10 px-4 py-2 text-peligro md:max-w-[70%]">
           <p>No pude obtener respuesta: {mensaje.texto}</p>
           <button onClick={onReintentar} className="mt-1 text-sm font-semibold underline hover:no-underline">
             Reintentar
@@ -240,17 +266,20 @@ function Burbuja({ mensaje, onReintentar }) {
   // Respuesta del asistente, con sus fuentes debajo (sin repetir)
   const fuentes = [...new Set((mensaje.fuentes ?? []).map((f) => NOMBRE_FUENTE[f] ?? f))];
   return (
-    <div className="flex justify-start">
+    <div className="flex items-start justify-start gap-2">
+      <Bot className={estiloAvatarAsistente} strokeWidth={2} aria-hidden="true" />
       <div className="max-w-[85%] md:max-w-[70%]">
-        <p className={`whitespace-pre-wrap break-words rounded-2xl rounded-bl-sm px-4 py-2 shadow-sm ${
-          mensaje.apagado ? "bg-slate-200 text-slate-700" : "bg-white text-slate-800 md:bg-slate-100"
+        {/* "apagado" = el asistente no está disponible: burbuja gris más discreta */}
+        <p className={`whitespace-pre-wrap break-words rounded-2xl rounded-bl-sm border px-4 py-2 ${
+          mensaje.apagado ? "border-borde bg-superficie-2 text-texto-suave" : "border-borde bg-superficie text-texto"
         }`}>
           {mensaje.texto}
         </p>
         {!mensaje.apagado && (
-          <p className="mt-1 px-2 text-xs text-slate-500">
+          <p className="mt-1 flex items-center gap-1 px-2 text-xs text-texto-suave">
+            {/* El 📄 ahora es el ícono FileText */}
             {fuentes.length
-              ? <>📄 Fuentes: {fuentes.join(", ")}</>
+              ? <><FileText className="size-3.5 shrink-0" strokeWidth={2} aria-hidden="true" />Fuentes: {fuentes.join(", ")}</>
               : "Sin consulta a la base de datos"}
           </p>
         )}

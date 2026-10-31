@@ -4,7 +4,19 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Río Claro Conecta</title>
+    <title>Río Claro Distribuidora</title>
+    <!-- Tema: se aplica ANTES de que cargue React para evitar un parpadeo blanco.
+         Oscuro por defecto; solo queda claro si el usuario lo eligió (localStorage "tema" = "light"). -->
+    <script>
+      try {
+        if (localStorage.getItem("tema") !== "light") {
+          document.documentElement.classList.add("dark");
+        }
+      } catch (e) {
+        // Si el navegador bloquea localStorage, dejamos el modo oscuro
+        document.documentElement.classList.add("dark");
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
