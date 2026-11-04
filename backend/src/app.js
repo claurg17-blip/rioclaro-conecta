@@ -72,6 +72,13 @@ app.use("/api/tablero", tableroRouter);
 app.use("/api/clientes", clientesRouter);
 app.use("/api/sucursales", sucursalesRouter);
 
+// GET /api/agente/estado — ¿está encendido el asistente? → { habilitado: true/false }
+// Cualquier usuario con sesión (ya pasó por requireAuth). Usa la misma regla que servicio.js:
+// solo está encendido si AGENTE_HABILITADO es exactamente "true".
+app.get("/api/agente/estado", (_req, res) => {
+  res.json({ habilitado: process.env.AGENTE_HABILITADO === "true" });
+});
+
 // POST /api/agente/chat — asistente de IA (todos los roles)
 // body: { mensaje, conversacionId? } → { texto, fuentes, conversacionId }
 // Solo tomamos esos dos campos del body; el usuario sale del token (req.user: id, rol, sucursal_id)
